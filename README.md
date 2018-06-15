@@ -78,7 +78,7 @@ class PPAuthView(RedirectView):
         return REDIRECT_TPL.format(key=priceplan_auth_key)
 ```
 
-### 3. Добавление скриптов в код страницы
+### [3. Добавление скриптов в код страницы](#test1)
 
 Результирующий HTML код на странице клиента должен содержать примерно такой фрагмент:
 
