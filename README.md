@@ -77,6 +77,8 @@ class PPAuthView(RedirectView):
         priceplan_auth_key = self.get_key(user_id=user.id)
         return REDIRECT_TPL.format(key=priceplan_auth_key)
 ```
+#### Пример реализации на PHP
+
 
 ### [3. Добавление скриптов в код страницы](#test1)
 
