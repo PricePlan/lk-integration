@@ -2,8 +2,11 @@
 
 ## Overview
 
-* [Типовой сценарий](README.md#scenario)
+* Типовой сценарий
 
 ## Methods
 
 * [Defining Methods](methods.md)
+
+
+
