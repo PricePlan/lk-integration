@@ -2,7 +2,7 @@
 
 ## Overview
 
-* Типовой сценарий
+* Типовой сценарий (README.md#scenario)
 
 ## Methods
 
