@@ -9,5 +9,3 @@
 
 * [Defining Methods](methods.md)
 
-
-
