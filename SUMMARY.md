@@ -1,12 +1,6 @@
 # Summary
-
-## Обзор
-
-* [Типовой сценарий](README.md#Типовой-сценарий)
-* [Добавление скриптов в код страницы](README.md#test1)
+* [Обзор виджета](README.md#top)
+* [Типовой сценарий](README.md#scenarium)
 * [Реализация](README.md#realisation)
 
-## Methods
-
-* [Defining Methods](methods.md)
 
