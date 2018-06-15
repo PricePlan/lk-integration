@@ -1,24 +1,24 @@
 # Интеграция интерфейса личного кабинета PricePlan с личным кабинетом сервиса клиента.
-
-Личный кабинет \(ЛК\) PricePlan может быть встроен в сервис клеиетна. В результате пользователи сервиса смогут пополнять баланс для физических и юридических лиц, управлять своими подписками \(создавать новые, изменять существующие\), работать  
-с документами, следить за зачислениями и списаниями.
+![](/assets/lk_123-1600x400.png)
+Личный кабинет \(ЛК\) PricePlan может быть встроен в ваш сервис. После интеграции  пользователи сервиса смогут пополнять баланс для физических и юридических лиц, управлять своими подписками \(создавать новые, изменять существующие\), работать с документами, следить за зачислениями и списаниями.
 
 **Обратите внимание**: функция по умолчанию отключена, её нужно дополнительно включить в настройках биллинга \(Интеграции -&gt; Кабинет клиента\).
-
+![](/assets/Selection_043.png)
 ## Типовой сценарий
 
 Приступая к интеграции, необходимо чётко определить варианты взаимодействия  
 между пользователями, порталом клиента и ЛК PricePlan. Типовой сценарий выглядит следующим образом:
 
-1. Пользователь авторизуется на сайте клиента \(например, посредством логина и пароля, которые хранятся на стороне клиента\).
+1. Пользователь авторизуется вашем личном кабинете \(например, посредством логина и пароля, которые хранятся в вашей базе данных\).
 
-2. Броузер осуществляет переход на страницу ЛК клиента.
+2. Браузер осуществляет переход на страницу ЛК клиента.
 
 3. На данной странице скрипт pp\_widgets.js создаёт дочерний компонент HTML _iframe_ для указанного элемента.
 
-4. Также этот скрипт заставляет броузер отправить запрос на ресурс, указанный в атрибуте **url\_auth**.
+4. Также этот скрипт заставляет браузер отправить запрос на ресурс, указанный в атрибуте **url\_auth**.
 
-5. Данный ресурс должен вернуть редирект вида [https://&lt;субдомен\_клиента&gt;-lk.priceplan.pro/auth-key/&lt;\*\*priceplan\_auth\_key\*\*&gt;/](https://<субдомен_клиента>-lk.priceplan.pro/auth-key/<**priceplan_auth_key**>/)
+5. Данный ресурс должен вернуть редирект вида:
+https://{yoursubdomain}-lk.priceplan.pro/auth-key/{priceplan_auth_key}/
 
 6. После перехода по означенному URL происходит авторизация пользователя в ЛК PricePlan, и _iframe_ может быть заполнен соответствующими данными.
 
@@ -34,8 +34,7 @@
 
 Для того чтобы пользователь мог быть авторизован в ЛК PricePlan \(без логина и пароля PricePlan\), на сервисе клиента необходимо реализовать специальный  
 ресурс. Этот ресурс должен получать у PricePlan **priceplan\_auth\_key** и отправлять его в качестве HTTP редиректа на адрес вида:
-
-[https://&lt;субдомен\_клиента&gt;-lk.priceplan.pro/auth-key/&lt;\*\*priceplan\_auth\_key\*\*&gt;/](https://<субдомен_клиента>-lk.priceplan.pro/auth-key/<**priceplan_auth_key**>/)
+https://{yoursubdomain}-lk.priceplan.pro/auth-key/{priceplan_auth_key}/
 
 #### Пример реализации на Python \(Django\) {#example}
 
@@ -45,10 +44,11 @@ import requests
 
 from django.views.generic.base import RedirectView
 
-LOGIN_TPL = 'http://<субдомен_клиента>-lk.priceplan.pro/api/login'
+LOGIN_TPL = 'http://{yoursubdomain}-lk.priceplan.pro/api/login'
 AUTH_KEY_TPL = \
-    'https://<субдомен_клиента>-lk.priceplan.pro/api/clients/%s/auth-key/'
-REDIRECT_TPL = 'https://<субдомен_клиента>-lk.priceplan.pro/auth-key/{key}/'
+    'https://{yoursubdomain}-lk.priceplan.pro/auth-key/{priceplan_auth_key}/
+'
+REDIRECT_TPL = 'https://{yoursubdomain}-lk.priceplan.pro/auth-key/{key}/'
 
 class PPAuthView(RedirectView):
     """
@@ -84,10 +84,10 @@ class PPAuthView(RedirectView):
 
 ```html
 <script type="text/javascript"
-  src="https://<субдомен_клиента>-lk.priceplan.pro/media/js/iframeResizer.js">
+  src="https://{yoursubdomain}-lk.priceplan.pro/media/js/iframeResizer.js">
 </script>
 <script type="text/javascript"
-  src="https://<субдомен_клиента>-lk.priceplan.pro/media/js/public_widgets/pp_widgets.js">
+  src="https://{yoursubdomain}-lk.priceplan.pro/media/js/public_widgets/pp_widgets.js">
 </script>
 
 <script type="text/javascript">
