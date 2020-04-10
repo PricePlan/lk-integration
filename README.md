@@ -8,10 +8,10 @@
 
 ## Типовой сценарий
 
-Приступая к интеграции, необходимо чётко определить варианты взаимодействия  
+Приступая к интеграции, необходимо чётко определить варианты взаимодействия
 между пользователями, порталом клиента и ЛК PricePlan. Типовой сценарий выглядит следующим образом:
 
-1. Пользователь авторизуется вашем личном кабинете \(например, посредством логина и пароля, которые хранятся в вашей базе данных\).
+1. Пользователь авторизуется в вашем личном кабинете \(например, посредством логина и пароля, которые хранятся в вашей базе данных\).
 
 2. Браузер осуществляет переход на страницу ЛК клиента.
 
@@ -34,53 +34,14 @@
 
 ### 2. Ресурс на сайте клиента для авторизации пользователя в ЛК PricePlan
 
-Для того чтобы пользователь мог быть авторизован в ЛК PricePlan \(без логина и пароля PricePlan\), на сервисе клиента необходимо реализовать специальный  
+Для того чтобы пользователь мог быть авторизован в ЛК PricePlan \(без логина и пароля PricePlan\), на сервисе клиента необходимо реализовать специальный
 ресурс. Этот ресурс должен получать у PricePlan **priceplan\_auth\_key** и отправлять его в качестве HTTP редиректа на адрес вида:
 https://{yoursubdomain}-lk.priceplan.pro/auth-key/{priceplan_auth_key}/
 
-#### Пример реализации на Python \(Django\)
+#### Пример реализации на Python
 
-```python
-import json
-import requests
-
-from django.views.generic.base import RedirectView
-
-LOGIN_TPL = 'http://{yoursubdomain}-lk.priceplan.pro/api/login'
-AUTH_KEY_TPL = \
-    'https://{yoursubdomain}-lk.priceplan.pro/auth-key/{priceplan_auth_key}/
-'
-REDIRECT_TPL = 'https://{yoursubdomain}-lk.priceplan.pro/auth-key/{key}/'
-
-class PPAuthView(RedirectView):
-    """
-    PricePlan personal area authentication view.
-
-    """
-    payload_manager = {
-        'user': '<manager_username>',
-        'password': '<manager_password>'
-    }
-
-    def get_key(self, user_id):
-        """Return PricePlan authentication key."""
-        # Авторизация в качестве менеджера
-        rsp_login = requests.post(LOGIN_TPL, data=json.dumps(payload_manager))
-        # Получение авторизационных данных для пользователя
-        rsp_auth_key = requests.post(AUTH_KEY_TPL % user_id,
-                                     cookies=rsp_login.cookies)
-        auth_data = json.loads(rsp_auth_key.content)
-        priceplan_auth_key = auth_data['data']['key']
-        return priceplan_auth_key
-
-    def get_redirect_url(self, *args, **kwargs):
-        """Make redirect URL."""
-        user = ... # Тут нужно получить объект пользователя
-        priceplan_auth_key = self.get_key(user_id=user.id)
-        return REDIRECT_TPL.format(key=priceplan_auth_key)
-```
-
-#### Пример реализации на PHP
+Пожалуйста, см. специально созданный демонстрационный пример
+  [customer-cabinet-example](https://github.com/linskiy/customer-cabinet-example).
 
 ### 3. Добавление скриптов в код страницы
 
