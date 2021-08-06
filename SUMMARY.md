@@ -1,9 +1,10 @@
 # Summary
 
-* [Обзор виджета](README.md#top)
-* [Типовой сценарий](README.md#scenarium)
-* [Реализация](README.md#realisation)
-  * [Хранение ID пользователя](README.md#r1)
-  * [Авторизация пользователя](README.md#r2)
-  * [Добавление скриптов в код страницы](README.md#r3)
+* [Интеграция личного кабинета priceplan с личным кабинетом стороннего веб сервиса](README.md#top)
+* [Простейший сценарий](README.md#scenarium)
+* [Алгоритм простейшего сценария](README.md#realization)
+  * [Реализация простейшего сценария на Python](README.md#py_1)
+  * [Реализация простейшего сценария на PHP](README.md#php_1)
+* [Личный кабинет priceplan в iframe](README.md#iframe_scenarium)
+  * [Пример реализации на Python](README.md#py_2)
 
