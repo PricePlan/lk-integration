@@ -1,118 +1,177 @@
 # Интеграция интерфейса личного кабинета PricePlan с личным кабинетом стороннего веб сервиса
 
-![](/assets/lk_123-1600x400.png)
+Личный кабинет (ЛК) PricePlan может быть встроен в ваш сервис. 
+После интеграции пользователи сервиса смогут пополнять баланс для 
+физических и юридических лиц, управлять своими подписками 
+(создавать новые, изменять существующие), работать с документами, 
+следить за зачислениями и списаниями.
+![Alt text](img/lk_123-1600x400.png)
 
-В экосистеме PricePlan существует модуль личного кабинета (ЛК), который может
-  использоваться, как «из коробки» (для этого ваши клиенты должны заходить в
-  кабинет клиента по URL вида https://*yoursubdomain*-lk.priceplan.pro/).
+**Обратите внимание:** функция по умолчанию отключена, 
+её нужно дополнительно включить в настройках биллинга 
+(Интеграции -> Кабинет клиента).
 
-Данное решение подходит не для всех наших партнёров. Как показывает практика,
-  подавляющие большинство из них выбирают способ интеграции посредством
-  [iframe](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe).
+![Alt text](img/lk_settings_screenshot.png "Пример настроек модуля виджета личеного кабинета")
 
-**Обратите внимание**: для того, чтобы означенный функционал стал доступен
-  клиентам (по умолчанию он отключен), необходимо подключить его в настройках
-  биллинга (Интеграции &#8594; Кабинет клиента).
+## Простейший сценарий
+Для реализации простейшего сценария вам понадобиться хранить на своей стороне ID клиентов в системе Priceplan
+полученных при [создании клиента](https://docs.priceplan.ru/#api-Client-CreateClient "создание клиента").
 
-![](/assets/PA-integration-01.png)
+Простейший вариант реализации выглядит следующим образом:
 
-## Встраивание через *iframe*
+1. Ваш клиент входит в "ЛК" на вашем сайте (например, посредством логина и пароля, которые хранятся в вашей базе данных)
+2. При успешном входе на стороне вашего сервера создается прямая ссылка на вход в ЛК priceplan
+3. Клиент перенаправляется на эту ссылку (По ней открывается Личный кабинет нужного пользователя)
 
-Приступая к интеграции, необходимо ясно осознать механизм сетевого
-  взаимодействия между броузером пользователя, порталом клиента и ЛК PricePlan.
+### <a name="link_creation" id="link_creation"></a> Как создать прямую ссылку на вход?
 
-Актуальный сценарий включает следующие этапы:
+Процесс создания прямой ссылки на вход клиента достаточно прост:
 
-1. После авторизации в вашем личном кабинете любым способом, например,
-  с помощью логина и пароля, валидными для вашего web-приложения, броузер пользователя осуществляет переход тем или иным способом на вашу страницу
-  кабинета клиента.
-
-2. На данной (родительской) странице должен присутствовать HTML-элемент
-  *iframe* для отображения ЛК PricePlan. В качестве атрибута *src* у этого
-  элемента следует указать URL ресурса на вашем бэкенде, который решает
-  3 задачи:
-
-  2.1. Получает через API PricePlan *токен* для аутентификации данного
-    пользователя. При этом аргументом запроса методом GET выступает
-    **идентификатор пользователя** клиента PricePlan
-    (https://*yoursubdomain*-lk.priceplan.pro/api/users/*USER_ID*/reset_token/);
-
-  2.2. Конструирует ссылку вида
-    https://*yoursubdomain*-lk.priceplan.pro/auth-key/*token*/
-
-  2.3. Возвращает броузеру ответ с перенаправлением на URL полученной ссылки
-
-3. В результате *iframe* будет заполнен соответствующим содержимым дочерней
-  страницы.
-
-## Реализация
-
-Для того, чтобы описанный сценарий заработал необходимо выполнить, как минимум,
-  первые 3 пункта из описанных далее.
-
-### 1. Хранение ID пользователя PricePlan на стороне клиента
-
-Для того, чтобы предотвратить отправку избыточных запросов к API, целесообразно
-  обеспечить долговременное хранение идентификатора пользователя клиента
-  PricePlan в профиле клиента на вашей стороне.
-
-Получить USER_ID для набора клиентов можно серией запросов, подобных этому:
-
-```bash
-curl -X GET \
-    -u '<service_user_api_key>:<service_user_password>' \
-    -H 'Content-Type: application/json; charset=utf-8' \
-    "https://<yoursubdomain>.priceplan.pro/api/clients/?take=25&skip=0&"`
-      `"page=1&pageSize=25&filter%5Blogic%5D=and&"`
-      `"fields=client__account_number%2Cclient__name%2Cclient__id%2C"`
-      `"client__delete%2Cclient__user_id"
+1. Вам нужно войти в аккаунт менеджера
+2. Сделать **POST** запрос на `https://{subdomain}-lk.priceplan.pro/api/clients/<id_клиента_в_системе_priceplan>/auth-key/`
+3. Результатом данного запроса будет JSON следующего вида:
+```json
+{
+    "data": {
+        "key": "kwFkMcnsyiyqqRKlKMErbJIID3tYNfq9Pqxw82AoL1CzCQfUab",
+        "expire_date": "2021-06-04 05:17:50.606808+03:00",
+        "link": "/auth-key/kwFkMcnsyiyqqRKlKMErbJIID3tYNfq9Pqxw82AoL1CzCQfUab/"
+    },
+    "success": true
+}
 ```
+4. Ссылка на вход, на которую вам нужно перенаправить клиента выглядит как `https://{subdomain}-lk.priceplan.pro/auth-key/<текст из поля "key" из JSON'a выше>/`
 
-### 2. Ресурс на сайте клиента для авторизации пользователя в ЛК PricePlan
+### Пример кода на python и django:
+```python
+import requests
+import json
+from django.shortcuts import redirect
 
-Чтобы пользователь мог быть авторизован в ЛК PricePlan по ссылке, требуется
-  реализовать специальный ресурс. Логика его работы описана в п.2 сценария.
-  Отметим также, что перед отправкой запросов к API PricePlan следует начать
-  авторизованную web-сессию с логином и паролем предварительного созданного
-  служебного пользователя с ролью «Менеджер».
+SUBDOMAIN = "test"
+LOGIN_TPL = f'https://{SUBDOMAIN}-lk.priceplan.pro/api/login'
+AUTH_KEY_GEN = \
+    f'https://{SUBDOMAIN}-lk.priceplan.pro/api/clients/%s/auth-key/'
 
-##### Пример реализации на Python
+REDIRECT_LINK = f'https://{SUBDOMAIN}-lk.priceplan.pro/auth-key/%s/'
 
-Пожалуйста, см. специально созданный демонстрационный пример
-  [customer-cabinet-example](https://github.com/linskiy/customer-cabinet-example).
+# Авторизация в качестве менеджера
+def index(request):
+    """Простой view с redirect'ом"""
+    session = requests.session()
+    payload_manager = {
+        'user': 'Логин менеджера',
+        'password': 'пароль менеджера'
+    }
+    
+    rsp_login = session.post(LOGIN_TPL, data=json.dumps(payload_manager))
+    user_id = 1 # id Клиента в системе priceplan, полученный где-то выше
+    rsp_auth_key = session.post(AUTH_KEY_GEN % user_id) # создание ссылки
+    auth_data = json.loads(rsp_auth_key.content) 
+    priceplan_auth_key = auth_data['data']['key'] # получение auth_key
+    return redirect(REDIRECT_LINK % priceplan_auth_key)
 
-### 3. Добавление скриптов в код страницы
+```
+### Пример кода на PHP (curl):
+```php
+<?php
+$USER_ID = 40; // ID клиента в системе priceplan полученное где-то выше
 
-Результирующий HTML код на странице клиента должен содержать примерно такой
-  фрагмент:
+$MANAGER_LOGIN = "логин_менеджера";
+$MANAGER_PASSWORD = "пароль_менеджера";
+
+$SUBDOMAIN = "test";
+
+$LOGIN_TPL = "https://$SUBDOMAIN-lk.priceplan.pro/api/login";
+$AUTH_KEY_GEN = "https://$SUBDOMAIN-lk.priceplan.pro/api/clients/%d/auth-key/";
+$REDIRECT_LINK = "https://$SUBDOMAIN-lk.priceplan.pro/auth-key/%s/";
+
+
+$LOGIN_DATA = json_encode(array(
+    'user' => $MANAGER_LOGIN,
+    'password' => $MANAGER_PASSWORD
+), JSON_UNESCAPED_UNICODE);
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_URL, $LOGIN_TPL);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $LOGIN_DATA );
+curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+curl_setopt($ch, CURLOPT_COOKIEJAR, '/tmp/cookies.txt');
+curl_setopt($ch, CURLOPT_COOKIEFILE, '/tmp/cookies.txt');
+$res = curl_exec($ch);
+
+curl_setopt($ch,CURLOPT_URL, sprintf($AUTH_KEY_GEN, $USER_ID));
+
+$res = curl_exec($ch);
+$auth_key = json_decode($res, true)['data']['key'];
+
+header ("Location: " . sprintf($REDIRECT_LINK, $auth_key));
+?>
+```
+## Кабинет в iframe
+Вы можете добавить личный кабинет прямо на страницу вашего сайта используя тег `<iframe>`.
+Однако данный способ подразумевает как минимум два условия:
+1. Ваш сайт должен работать по `HTTPS` протоколу
+2. В настройках интеграции личного кабинета должна быть включена настройка `Виджет личного кабинета` и функция `Авторизация по ссылке`
+
+Чтобы добавить `iframe` с личным кабинетом priceplan на ваш сайт вам нужно:
+1. Создать на своем сайте ссылку, возвращающую **редирект** на [прямую ссылку для авторизации в priceplan](#link_creation)
+2. Добавить на нужную вам страницу iframe, В качестве `href` указать ссылку на вход
+
+Пример кода на python
+
+```python
+import json
+import requests
+from django.shortcuts import render, redirect
+
+
+def cabinet_view(request): # URL: /cabinet/
+    """View Вашего личного кабинета"""
+    if not request.user.is_authenticated:
+        return redirect('/register/')
+    link, key = get_cabinet_link(request.user.profile.priceplan_id)
+    return render(request, 'cabinet.html', {'user': request.user, 'cabinet_link': link, 'key': key })
+    
+
+def get_cabinet_link(priceplan_id):
+    """Получение ссылки на вход пользователя"""
+    SUBDOMAIN = "test"
+    LOGIN_TPL = f'https://{SUBDOMAIN}-priceplan.pro/api/login'
+    AUTH_KEY_GEN = \
+        f'https://{SUBDOMAIN}-lk.priceplan.pro/api/clients/%s/auth-key/'
+
+    REDIRECT_LINK = f'https://{SUBDOMAIN}-lk.priceplan.pro/auth-key/%s/'
+    session = requests.session()
+    payload_manager = {
+        'user': 'Логин менеджера',
+        'password': 'Пароль менеджера'
+    }
+    rsp_login = session.post(LOGIN_TPL, data=json.dumps(payload_manager))
+    user_id = str(priceplan_id)  # id Клиента в системе priceplan, полученный где-то выше
+    rsp_auth_key = session.post(AUTH_KEY_GEN % user_id)  # создание ссылки
+    auth_data = json.loads(rsp_auth_key.content)
+    priceplan_auth_key = auth_data['data']['key']  # получение auth_key
+    return REDIRECT_LINK % priceplan_auth_key, priceplan_auth_key
+
+
+def redirect_to_pp(request, key):  # URL: /priceplan/<str:key>/
+    """View, возвращающий redirect в ЛК priceplan"""
+    SUBDOMAIN = "test"
+    REDIRECT_LINK = f'https://{SUBDOMAIN}-lk.priceplan.pro/auth-key/%s/'
+    link = REDIRECT_LINK % key
+    return redirect(link)
+```
 
 ```html
-<iframe id="pp" src="{{ iframe_src }}" width="100%">
-  PricePlan will be shown here.
-</iframe>
-
-<!-- И далее -->
-
-<script src="{{ prefix }}/js/iframeResizer.min.js"></script>
-<script>
-  iFrameResize({
-    log: false,
-    warningTimeout: 15000,
-    checkOrigin: false
-  });
-</script>
-```
-
-### 4. Предотвращение выхода пользователя из ЛК PricePlan
-
-Чтобы пользователь кабинета случайно или преднамеренно не прервал
-  авторизованную web-сессию с сервером PricePlan, достаточно скрыть кнопку
-  «Выход», обычно расположенную вверху справа страницы. Для этого нужно в
-  настройках модуля ЛК Priceplan в поле «Добавление CSS» вставить следующий
-  фрагмент кода:
-
-```css
-#logout_from_cabimet {
-  display: none;
-}
+<!-- Файл cabinet.html -->
+...
+... <!-- Код страницы личного кабинета -->
+... 
+<iframe src="/priceplan/{{ key }}/" frameborder="0"></iframe>
+...
+... <!-- Код страницы личного кабинета -->
+... 
 ```
